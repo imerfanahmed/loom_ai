@@ -15,6 +15,8 @@
 - 📜 **Command History** — Track every push in the current session
 - 🔒 **Offline Demo** — Works without an API key using built-in demo responses
 
+- ✏️ **Command Editor** — Edit, add, delete, reorder AI-generated commands before pushing
+
 ---
 
 ## 🚀 Quick Start
@@ -70,11 +72,22 @@ Once running, type natural-language requests:
   6 │  no shutdown
   7 │ end
 
-⚡ Push these commands to the device? [Y/n]: y
-✅ Success — 7 command(s) pushed to Router-1
+✏️  Editor mode — modify commands before pushing. Type help for commands.
+
+  editor> edit 2
+  Current line 2:  name SALES
+  replace with:  name ENGINEERING
+  ✔ Line 2 updated.
+
+  editor> add
+  new command: write memory
+  ✔ Added line 8: write memory
+
+  editor> push
+✅ Success — 8 command(s) pushed to Router-1
 ```
 
-### Built-in commands
+### CLI Commands
 
 | Command   | Description              |
 |-----------|--------------------------|
@@ -83,6 +96,22 @@ Once running, type natural-language requests:
 | `history` | Show push history        |
 | `clear`   | Clear the screen         |
 | `exit`    | Quit Loom CLI            |
+
+### ✏️ Editor Commands
+
+After commands are generated, you enter editor mode:
+
+| Command      | Description                            |
+|--------------|----------------------------------------|
+| `edit N`     | Edit line N                            |
+| `add`        | Append a new command at the end        |
+| `insert N`   | Insert a new line before line N        |
+| `del N`      | Delete line N                          |
+| `swap N M`   | Swap lines N and M                     |
+| `show`       | Redisplay the command list             |
+| `reset`      | Restore original AI-generated commands |
+| `push`       | Accept & push commands to device       |
+| `discard`    | Discard all and return to prompt       |
 
 ---
 
