@@ -49,6 +49,11 @@ class NetworkDriver(ABC):
         """Close the connection to the device."""
         ...
 
+    @abstractmethod
+    def get_running_config(self) -> str:
+        """Fetch the running configuration from the device."""
+        ...
+
     def __enter__(self):
         self.connect()
         return self

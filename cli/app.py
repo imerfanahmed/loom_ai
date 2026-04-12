@@ -6,6 +6,8 @@ Rich-powered conversational interface for Cisco device configuration.
 from __future__ import annotations
 
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import List
 
 from rich.console import Console
@@ -18,7 +20,7 @@ from rich.markdown import Markdown
 from rich import box
 
 from ai import GeminiEngine
-from network.mock_driver import MockDriver
+from network.base import NetworkDriver
 from models import Device, CommandResult
 
 
@@ -41,7 +43,7 @@ class LoomCLI:
     def __init__(
         self,
         engine: GeminiEngine,
-        driver: MockDriver,
+        driver: NetworkDriver,
         device: Device,
     ) -> None:
         self.console = Console()
@@ -87,11 +89,44 @@ class LoomCLI:
                 self.console.clear()
                 self._show_banner()
                 continue
+            if stripped in ("save", "backup"):
+                self._save_config()
+                continue
 
             # ── AI generates commands ─────────────────────────────────
             self._handle_request(user_input.strip())
 
     # ── Request handling ──────────────────────────────────────────────────
+
+    def _save_config(self) -> None:
+        """Fetch running config and save it to storage."""
+        self.console.print("\n[dim]Connecting to device to fetch running configuration...[/]")
+        with self.console.status(
+            f"[bold cyan]📡 Retrieving from {self.device.hostname}…[/]",
+            spinner="dots",
+        ):
+            config = self.driver.get_running_config()
+            
+        if config.startswith("Error"):
+            self.console.print(f"[bold red]❌ {config}[/]")
+            return
+            
+        # Create storage directory at project root
+        project_root = Path(__file__).resolve().parent.parent
+        storage_dir = project_root / "storage"
+        storage_dir.mkdir(exist_ok=True)
+        
+        # Save to file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{self.device.hostname}_{timestamp}.cfg"
+        file_path = storage_dir / filename
+        
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(config)
+            self.console.print(f"[bold green]✅ Running config saved to [white]{file_path}[/][/]\n")
+        except Exception as e:
+            self.console.print(f"[bold red]❌ Failed to save config: {e}[/]\n")
 
     def _handle_request(self, user_prompt: str) -> None:
         """Send prompt to AI, open editor, then optionally push."""
@@ -371,14 +406,14 @@ class LoomCLI:
         table.add_row("IP Address", self.device.ip)
         table.add_row("Type", self.device.device_type)
         table.add_row("Username", self.device.username)
-        table.add_row("Status", "[bold green]Mock (Simulated)[/]")
+        table.add_row("Status", "[bold green]LIVE (Netmiko)[/]")
         self.console.print(table)
 
     def _show_help_hint(self) -> None:
         self.console.print(
             "\n[dim]Type your configuration request in plain English, "
             "or use:[/] [bold]help[/] [dim]|[/] [bold]devices[/] [dim]|[/] "
-            "[bold]history[/] [dim]|[/] [bold]clear[/] [dim]|[/] [bold]exit[/]\n"
+            "[bold]history[/] [dim]|[/] [bold]save[/] [dim]|[/] [bold]clear[/] [dim]|[/] [bold]exit[/]\n"
         )
 
     def _show_help(self) -> None:
@@ -390,6 +425,7 @@ class LoomCLI:
 | `help`      | Show this help message                     |
 | `devices`   | Show active device information             |
 | `history`   | Show command push history                  |
+| `save`      | Save running config to storage directory   |
 | `clear`     | Clear the screen                           |
 | `exit`      | Quit Loom CLI                              |
 
@@ -454,7 +490,30 @@ class LoomCLI:
             )
         )
 
+    def _show_exit_summary(self) -> None:
+        successful = [entry for entry in self._history if entry["result"].success]
+        if not successful:
+            self.console.print("\n[dim]No changes were pushed during this session.[/]")
+            return
+
+        table = Table(
+            title="📝 Session Summary of Changes",
+            box=box.ROUNDED,
+            border_style="green",
+            title_style="bold",
+        )
+        table.add_column("Prompt/Action", style="cyan")
+        table.add_column("Commands Pushed", style="white")
+
+        for entry in successful:
+            cmds = "\n".join(entry["commands"])
+            table.add_row(entry["prompt"], cmds)
+
+        self.console.print()
+        self.console.print(table)
+
     def _exit(self) -> None:
+        self._show_exit_summary()
         self.driver.disconnect()
         self.console.print(
             "\n[bold bright_blue]👋 Goodbye from Loom CLI![/]\n"

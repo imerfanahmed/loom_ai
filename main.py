@@ -18,7 +18,7 @@ if str(_ROOT) not in sys.path:
 from config import settings
 from models import Device
 from ai import GeminiEngine
-from network import MockDriver
+from network import NetmikoDriver
 from cli import LoomCLI
 
 
@@ -29,9 +29,8 @@ def main() -> None:
     # 2. Initialise the AI engine
     engine = GeminiEngine()
 
-    # 3. Create the mock network driver
-    driver = MockDriver(device)
-    driver.connect()
+    # 3. Create the network driver
+    driver = NetmikoDriver(device)
 
     # 4. Launch the CLI
     app = LoomCLI(engine=engine, driver=driver, device=device)

@@ -16,9 +16,6 @@ from network.base import NetworkDriver
 class NetmikoDriver(NetworkDriver):
     """
     Real Netmiko-based driver for pushing commands to Cisco devices.
-
-    This driver is provided for future use when real routers / switches
-    are available.  It is NOT instantiated in the current prototype.
     """
 
     def __init__(self, device: Device) -> None:
@@ -62,3 +59,12 @@ class NetmikoDriver(NetworkDriver):
         if self._connection:
             self._connection.disconnect()
         self._connected = False
+
+    def get_running_config(self) -> str:
+        if not self._connected or self._connection is None:
+            self.connect()
+
+        try:
+            return self._connection.send_command("show running-config")
+        except Exception as exc:
+            return f"Error Retrieving Configuration: {exc}"
