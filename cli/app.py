@@ -9,6 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List
+import getpass
 
 from rich.console import Console
 from rich.panel import Panel
@@ -406,7 +407,7 @@ class LoomCLI:
         table.add_row("IP Address", self.device.ip)
         table.add_row("Type", self.device.device_type)
         table.add_row("Username", self.device.username)
-        table.add_row("Status", "[bold green]LIVE (Netmiko)[/]")
+        table.add_row("Status", "[bold green]Live (SSH)[/]")
         self.console.print(table)
 
     def _show_help_hint(self) -> None:
@@ -491,6 +492,9 @@ class LoomCLI:
         )
 
     def _show_exit_summary(self) -> None:
+        user = getpass.getuser()
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         successful = [entry for entry in self._history if entry["result"].success]
         if not successful:
             self.console.print("\n[dim]No changes were pushed during this session.[/]")
@@ -498,19 +502,37 @@ class LoomCLI:
 
         table = Table(
             title="📝 Session Summary of Changes",
+            caption=f"Executed by: {user} | Session closed at: {now}",
             box=box.ROUNDED,
             border_style="green",
             title_style="bold",
         )
+        table.add_column("Time", style="dim", width=10)
+        table.add_column("User", style="magenta")
         table.add_column("Prompt/Action", style="cyan")
         table.add_column("Commands Pushed", style="white")
 
+        log_content = f"--- Session Summary: {now} ---\nUser: {user}\n"
+
         for entry in successful:
             cmds = "\n".join(entry["commands"])
-            table.add_row(entry["prompt"], cmds)
+            time_str = entry["result"].timestamp.strftime("%H:%M:%S")
+            table.add_row(time_str, user, entry["prompt"], cmds)
+
+            log_content += f"[{time_str}] Action: {entry['prompt']}\nCommands:\n{cmds}\n"
+
+        log_content += "-" * 50 + "\n\n"
 
         self.console.print()
         self.console.print(table)
+
+        # Append to log file
+        try:
+            log_path = Path(__file__).resolve().parent.parent / "session_summary.log"
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(log_content)
+        except Exception as e:
+            self.console.print(f"[dim red]Failed to write to session log: {e}[/]")
 
     def _exit(self) -> None:
         self._show_exit_summary()

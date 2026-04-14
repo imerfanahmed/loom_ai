@@ -1,7 +1,7 @@
 """
 Loom CLI — Netmiko Network Driver
 Real implementation using Netmiko for future use with actual devices.
-Not used in the prototype — all interactions go through MockDriver.
+Production SSH driver using Netmiko.
 """
 
 from __future__ import annotations

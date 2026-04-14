@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Loom CLI — Entry Point
-Wires together config, AI engine, mock driver, and the interactive CLI.
+Wires together config, AI engine, network driver, and the interactive CLI.
 
 Usage:
     python main.py

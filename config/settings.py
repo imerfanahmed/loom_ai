@@ -22,13 +22,13 @@ class Settings:
     # ── Logging ───────────────────────────────────────────────────────────
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
-    # ── Default mock device ───────────────────────────────────────────────
+    # ── Default network device ────────────────────────────────────────────
     DEFAULT_DEVICE = {
         "hostname": "Router-1",
-        "ip": "192.168.1.1",
+        "ip": "172.16.57.137",
         "device_type": "cisco_ios",
         "username": "admin",
-        "password": "admin123",
+        "password": "admin1pass",
     }
 
     @property

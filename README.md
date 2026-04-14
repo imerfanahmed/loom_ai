@@ -10,7 +10,7 @@
 ## ✨ Features
 
 - 🤖 **AI-Powered** — Describe what you want in English; Gemini generates the exact Cisco IOS commands
-- 📡 **Netmiko Ready** — Mock driver for prototyping, real Netmiko driver ready for production
+- 📡 **Netmiko Ready** — Built-in Netmiko driver for robust production SSH connections
 - 🎨 **Beautiful CLI** — Rich-powered terminal UI with syntax highlighting, panels, and spinners
 - 📜 **Command History** — Track every push in the current session
 - 🔒 **Offline Demo** — Works without an API key using built-in demo responses
@@ -50,7 +50,7 @@ cisco_cli/
 ├── config/              # Settings & .env loading
 ├── models/              # Device & CommandResult dataclasses
 ├── ai/                  # Gemini API integration
-├── network/             # Network drivers (Mock + Netmiko)
+├── network/             # Network drivers (Netmiko)
 └── cli/                 # Rich interactive CLI
 ```
 
