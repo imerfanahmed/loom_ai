@@ -30,11 +30,11 @@ Respond with ONLY the exact Cisco IOS commands needed — one command per line.
 Do NOT include any explanation, markdown, code fences, comments, or extra text.
 
 Rules:
-- If the user asks for a CONFIGURATION task, provide config commands starting
-  from global configuration mode (user is in `configure terminal`).
-  End with `end` to return to privileged EXEC mode.
+- If the user asks for a CONFIGURATION task, provide config commands.
+  You MUST start the configuration block with `config t` or `configure terminal`
+  to enter global configuration mode. End with `end` to return to privileged EXEC mode.
 - If the user asks to SEE or SHOW something, provide the appropriate `show`
-  command(s) from privileged EXEC mode.  Do NOT wrap these in config mode.
+  command(s) from privileged EXEC mode. Do NOT use `config t` for show commands.
 - If the user asks to troubleshoot, provide appropriate exec-level commands
   like `ping`, `traceroute`, `debug`, etc.
 - If the request is ambiguous, make reasonable assumptions and use common defaults.
@@ -45,6 +45,7 @@ Rules:
 # ── Hardcoded demos for offline / no-API-key mode ──────────────────────────
 _DEMO_COMMANDS = {
     "default": [
+        "config t",
         "interface GigabitEthernet0/1",
         " description Configured by Loom CLI",
         " ip address 10.0.0.1 255.255.255.0",
@@ -157,6 +158,7 @@ class GeminiEngine:
         # ── Configuration: VLANs ──────────────────────────────────────
         if "vlan" in prompt_lower:
             return [
+                "config t",
                 "vlan 10",
                 " name SALES",
                 "interface GigabitEthernet0/1",
@@ -169,6 +171,7 @@ class GeminiEngine:
         # ── Configuration: OSPF / routing ─────────────────────────────
         if "ospf" in prompt_lower or "routing" in prompt_lower:
             return [
+                "config t",
                 "router ospf 1",
                 " network 10.0.0.0 0.0.0.255 area 0",
                 " network 192.168.1.0 0.0.0.255 area 0",
@@ -178,6 +181,7 @@ class GeminiEngine:
         # ── Configuration: ACL ────────────────────────────────────────
         if "acl" in prompt_lower or "access-list" in prompt_lower:
             return [
+                "config t",
                 "ip access-list extended BLOCK_TELNET",
                 " deny tcp any any eq 23",
                 " permit ip any any",
@@ -189,6 +193,7 @@ class GeminiEngine:
         # ── Configuration: SSH ────────────────────────────────────────
         if "ssh" in prompt_lower:
             return [
+                "config t",
                 "hostname Router-1",
                 "ip domain-name loom.local",
                 "crypto key generate rsa modulus 2048",
@@ -203,6 +208,7 @@ class GeminiEngine:
         # ── Configuration: NAT ────────────────────────────────────────
         if "nat" in prompt_lower:
             return [
+                "config t",
                 "interface GigabitEthernet0/0",
                 " ip nat inside",
                 "interface GigabitEthernet0/1",
@@ -215,6 +221,7 @@ class GeminiEngine:
         # ── Configuration: Hostname / banner ──────────────────────────
         if "hostname" in prompt_lower or "banner" in prompt_lower:
             return [
+                "config t",
                 "hostname Router-1",
                 "banner motd # Authorized Access Only #",
                 "end",

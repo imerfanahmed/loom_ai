@@ -30,7 +30,9 @@ class NetmikoDriver(NetworkDriver):
             host=self.device.ip,
             username=self.device.username,
             password=self.device.password,
+            secret=self.device.password,
         )
+        self._connection.enable()
         self._connected = True
 
     def send_commands(self, commands: List[str]) -> CommandResult:
@@ -38,7 +40,20 @@ class NetmikoDriver(NetworkDriver):
             self.connect()
 
         try:
-            output = self._connection.send_config_set(commands)
+            # Check if this is a configuration block
+            has_config_start = any(cmd.strip() in ("config t", "configure terminal") for cmd in commands)
+            
+            if has_config_start:
+                # Filter out the explicit mode entry/exit commands since send_config_set handles it automatically
+                config_cmds = [cmd for cmd in commands if cmd.strip() not in ("config t", "configure terminal", "end", "exit")]
+                output = self._connection.send_config_set(config_cmds)
+            else:
+                # Execute exec mode commands sequentially
+                outputs = []
+                for cmd in commands:
+                    out = self._connection.send_command(cmd)
+                    outputs.append(f"{self._connection.find_prompt()}{cmd}\n{out}")
+                output = "\n".join(outputs)
             return CommandResult(
                 device=self.device,
                 commands=commands,
