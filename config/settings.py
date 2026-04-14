@@ -25,7 +25,7 @@ class Settings:
     # ── Default network device ────────────────────────────────────────────
     DEFAULT_DEVICE = {
         "hostname": "Router-1",
-        "ip": "172.16.57.137",
+        "ip": "172.16.57.138",
         "device_type": "cisco_ios",
         "username": "admin",
         "password": "admin1pass",
