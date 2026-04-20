@@ -19,6 +19,7 @@ class Device:
     device_type: str = "cisco_ios"
     username: str = "admin"
     password: str = "admin123"
+    secret: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> "Device":

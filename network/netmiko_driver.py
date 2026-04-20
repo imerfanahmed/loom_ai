@@ -30,7 +30,11 @@ class NetmikoDriver(NetworkDriver):
             host=self.device.ip,
             username=self.device.username,
             password=self.device.password,
-            secret=self.device.password,
+            secret=self.device.secret or self.device.password,
+            global_delay_factor=2,
+            timeout=120,
+            read_timeout_override=90,
+            session_log="netmiko_session.log",
         )
         self._connection.enable()
         self._connected = True
@@ -74,6 +78,47 @@ class NetmikoDriver(NetworkDriver):
         if self._connection:
             self._connection.disconnect()
         self._connected = False
+
+    def get_device_info(self) -> dict:
+        if not self._connected or self._connection is None:
+            self.connect()
+            
+        info = {
+            "hostname": "Unknown",
+            "version": "Unknown",
+            "uptime": "Unknown",
+            "hardware": "Unknown"
+        }
+        
+        try:
+            prompt = self._connection.find_prompt()
+            # Remove trailing prompt characters
+            info["hostname"] = prompt.strip("#>")
+            
+            output = self._connection.send_command("show version")
+            import re
+            
+            # Match uptime
+            uptime_match = re.search(r"uptime is (.*?)(?:\n|\r)", output)
+            if uptime_match:
+                info["uptime"] = uptime_match.group(1).strip()
+                
+            # Match version
+            version_match = re.search(r"Version ([\w\.\(\)\-]+),?", output)
+            if version_match:
+                info["version"] = version_match.group(1).strip()
+                
+            # Match hardware/model
+            hw_match = re.search(r"cisco ([\w\-]+) \([^\)]+\) processor", output, re.IGNORECASE)
+            if not hw_match:
+                hw_match = re.search(r"Hardware:\s+([\w\-]+),", output, re.IGNORECASE)
+            if hw_match:
+                info["hardware"] = hw_match.group(1).strip()
+                
+        except Exception:
+            pass
+            
+        return info
 
     def get_running_config(self) -> str:
         if not self._connected or self._connection is None:

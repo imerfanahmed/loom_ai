@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 # Ensure project root is on sys.path so packages resolve correctly
 _ROOT = Path(__file__).resolve().parent
@@ -36,13 +37,18 @@ def main() -> None:
             username = "admin" # Default
 
         password = get_masked_input(f"Enter Password for {username}: ")
+        
+        secret = get_masked_input(f"Enter Enable Password (If privileged 15 user, press enter): ")
+        if not secret.strip():
+            secret = password
 
         # 2. Build the device model
         device = Device(
             hostname="Cisco-Device", # Placeholder hostname until connected
             ip=ip,
             username=username,
-            password=password
+            password=password,
+            secret=secret
         )
 
         # 3. Initialise the AI engine
@@ -54,7 +60,26 @@ def main() -> None:
         # 5. Verify connection
         console.print(f"[yellow]Attempting to connect to {ip}...[/yellow]")
         driver.connect()
-        console.print("[green]✓ Connection successful![/green]")
+        console.print("[green]✓ Connection successful![/green]\n")
+
+        # Fetch and display device info
+        with console.status("[dim]Fetching device information...[/dim]"):
+            info = driver.get_device_info()
+            
+        if info["hostname"] != "Unknown":
+            device.hostname = info["hostname"]
+
+        table = Table(title="Device Information", style="cyan", show_header=True, header_style="bold magenta")
+        table.add_column("Property")
+        table.add_column("Value", style="green")
+        
+        table.add_row("Hostname", info["hostname"])
+        table.add_row("Hardware", info["hardware"])
+        table.add_row("OS Version", info["version"])
+        table.add_row("Uptime", info["uptime"])
+        
+        console.print(table)
+        console.print()
 
         # 6. Launch the CLI
         app = LoomCLI(engine=engine, driver=driver, device=device)

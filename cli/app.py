@@ -492,7 +492,7 @@ class LoomCLI:
         )
 
     def _show_exit_summary(self) -> None:
-        user = getpass.getuser()
+        user = self.device.username
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         successful = [entry for entry in self._history if entry["result"].success]
@@ -511,15 +511,19 @@ class LoomCLI:
         table.add_column("User", style="magenta")
         table.add_column("Prompt/Action", style="cyan")
         table.add_column("Commands Pushed", style="white")
+        table.add_column("Output", style="green", max_width=50)
 
         log_content = f"--- Session Summary: {now} ---\nUser: {user}\n"
 
         for entry in successful:
             cmds = "\n".join(entry["commands"])
             time_str = entry["result"].timestamp.strftime("%H:%M:%S")
-            table.add_row(time_str, user, entry["prompt"], cmds)
+            output = entry["result"].output
+            
+            table_output = output if len(output) < 200 else output[:197] + "..."
+            table.add_row(time_str, user, entry["prompt"], cmds, table_output)
 
-            log_content += f"[{time_str}] Action: {entry['prompt']}\nCommands:\n{cmds}\n"
+            log_content += f"[{time_str}] Action: {entry['prompt']}\nCommands:\n{cmds}\nOutput:\n{output}\n\n"
 
         log_content += "-" * 50 + "\n\n"
 
